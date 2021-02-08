@@ -100,6 +100,19 @@ var FactoryMaker = (function () {
         });
     }
 
+    /**
+     * Use this method to remove all singleton instances associated with a particular context.
+     *
+     * @param {Object} context
+     * @memberof module:FactoryMaker
+     * @instance
+     */
+    function deleteSingletonInstances(context) {
+        singletonContexts = singletonContexts.filter(function (x) {
+            return x.context !== context;
+        });
+    }
+
     /*------------------------------------------------------------------------------------------*/
 
     // Factories storage Management
@@ -247,6 +260,7 @@ var FactoryMaker = (function () {
         extend: extend,
         getSingletonInstance: getSingletonInstance,
         setSingletonInstance: setSingletonInstance,
+        deleteSingletonInstances: deleteSingletonInstances,
         getSingletonFactory: getSingletonFactory,
         getSingletonFactoryByName: getSingletonFactoryByName,
         updateSingletonFactory: updateSingletonFactory,
@@ -484,11 +498,53 @@ var Constants = (function () {
       this.ABR_STRATEGY_BOLA = 'abrBola';
 
       /**
+       *  @constant {string} ABR_STRATEGY_L2A Adaptive bitrate algorithm based on L2A (online learning)
+       *  @memberof Constants#
+       *  @static
+       */
+      this.ABR_STRATEGY_L2A = 'abrL2A';
+
+      /**
+       *  @constant {string} ABR_STRATEGY_LoLP Adaptive bitrate algorithm based on LoL+
+       *  @memberof Constants#
+       *  @static
+       */
+      this.ABR_STRATEGY_LoLP = 'abrLoLP';
+
+      /**
        *  @constant {string} ABR_STRATEGY_THROUGHPUT Adaptive bitrate algorithm based on throughput
        *  @memberof Constants#
        *  @static
        */
       this.ABR_STRATEGY_THROUGHPUT = 'abrThroughput';
+
+      /**
+       *  @constant {string} ABR_FETCH_THROUGHPUT_CALUCUALTION_DOWNLOADED_DATA Throughput calculation based on downloaded data array
+       *  @memberof Constants#
+       *  @static
+       */
+      this.ABR_FETCH_THROUGHPUT_CALCULATION_DOWNLOADED_DATA = 'abrFetchThroughputCalculationDownloadedData';
+
+      /**
+       *  @constant {string} ABR_FETCH_THROUGHPUT_CALCULATION_MOOF_PARSING Throughput calculation based on moof parsing
+       *  @memberof Constants#
+       *  @static
+       */
+      this.ABR_FETCH_THROUGHPUT_CALCULATION_MOOF_PARSING = 'abrFetchThroughputCalculationMoofParsing';
+
+      /**
+       *  @constant {string} LIVE_CATCHUP_MODE_DEFAULT Throughput calculation based on moof parsing
+       *  @memberof Constants#
+       *  @static
+       */
+      this.LIVE_CATCHUP_MODE_DEFAULT = 'liveCatchupModeDefault';
+
+      /**
+       *  @constant {string} LIVE_CATCHUP_MODE_LOLP Throughput calculation based on moof parsing
+       *  @memberof Constants#
+       *  @static
+       */
+      this.LIVE_CATCHUP_MODE_LOLP = 'liveCatchupModeLoLP';
 
       /**
        *  @constant {string} MOVING_AVERAGE_SLIDING_WINDOW Moving average sliding window
@@ -512,11 +568,39 @@ var Constants = (function () {
       this.BAD_ARGUMENT_ERROR = 'Invalid Arguments';
 
       /**
-       *  @constant {string} MISSING_CONFIG_ERROR Missing ocnfiguration parameters type of error
+       *  @constant {string} MISSING_CONFIG_ERROR Missing configuration parameters type of error
        *  @memberof Constants#
        *  @static
        */
       this.MISSING_CONFIG_ERROR = 'Missing config parameter(s)';
+
+      /**
+       *  @constant {string} TRACK_SWITCH_MODE_ALWAYS_REPLACE used to clear the buffered data (prior to current playback position) after track switch. Default for audio
+       *  @memberof Constants#
+       *  @static
+       */
+      this.TRACK_SWITCH_MODE_ALWAYS_REPLACE = 'alwaysReplace';
+
+      /**
+       *  @constant {string} TRACK_SWITCH_MODE_NEVER_REPLACE used to forbid clearing the buffered data (prior to current playback position) after track switch. Defers to fastSwitchEnabled for placement of new data. Default for video
+       *  @memberof Constants#
+       *  @static
+       */
+      this.TRACK_SWITCH_MODE_NEVER_REPLACE = 'neverReplace';
+
+      /**
+       *  @constant {string} TRACK_SELECTION_MODE_HIGHEST_BITRATE makes the player select the track with a highest bitrate. This mode is a default mode.
+       *  @memberof Constants#
+       *  @static
+       */
+      this.TRACK_SELECTION_MODE_HIGHEST_BITRATE = 'highestBitrate';
+
+      /**
+       *  @constant {string} TRACK_SELECTION_MODE_WIDEST_RANGE this mode makes the player select the track with a widest range of bitrates
+       *  @memberof Constants#
+       *  @static
+       */
+      this.TRACK_SELECTION_MODE_WIDEST_RANGE = 'widestRange';
 
       this.LOCATION = 'Location';
       this.INITIALIZE = 'initialize';
@@ -527,6 +611,12 @@ var Constants = (function () {
       this.UTF8 = 'utf-8';
       this.SCHEME_ID_URI = 'schemeIdUri';
       this.START_TIME = 'starttime';
+      this.SERVICE_DESCRIPTION_LL_SCHEME = 'urn:dvb:dash:lowlatency:scope:2019';
+      this.SUPPLEMENTAL_PROPERTY_LL_SCHEME = 'urn:dvb:dash:lowlatency:critical:2019';
+      this.XML = 'XML';
+      this.ARRAY_BUFFER = 'ArrayBuffer';
+      this.DVB_REPORTING_URL = 'dvb:reportingUrl';
+      this.DVB_PROBABILITY = 'dvb:probability';
     }
   }]);
 
@@ -691,7 +781,7 @@ module.exports = exports['default'];
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
-    value: true
+  value: true
 });
 
 var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
@@ -707,18 +797,24 @@ var _coreEventsEventsBase = _dereq_(2);
 var _coreEventsEventsBase2 = _interopRequireDefault(_coreEventsEventsBase);
 
 var MetricsReportingEvents = (function (_EventsBase) {
-    _inherits(MetricsReportingEvents, _EventsBase);
+  _inherits(MetricsReportingEvents, _EventsBase);
 
-    function MetricsReportingEvents() {
-        _classCallCheck(this, MetricsReportingEvents);
+  function MetricsReportingEvents() {
+    _classCallCheck(this, MetricsReportingEvents);
 
-        _get(Object.getPrototypeOf(MetricsReportingEvents.prototype), 'constructor', this).call(this);
+    _get(Object.getPrototypeOf(MetricsReportingEvents.prototype), 'constructor', this).call(this);
 
-        this.METRICS_INITIALISATION_COMPLETE = 'internal_metricsReportingInitialized';
-        this.BECAME_REPORTING_PLAYER = 'internal_becameReportingPlayer';
-    }
+    this.METRICS_INITIALISATION_COMPLETE = 'internal_metricsReportingInitialized';
+    this.BECAME_REPORTING_PLAYER = 'internal_becameReportingPlayer';
 
-    return MetricsReportingEvents;
+    /**
+     * Triggered when CMCD data was generated for a HTTP request
+     * @event MetricsReportingEvents#CMCD_DATA_GENERATED
+     */
+    this.CMCD_DATA_GENERATED = 'cmcdDataGenerated';
+  }
+
+  return MetricsReportingEvents;
 })(_coreEventsEventsBase2['default']);
 
 var metricsReportingEvents = new MetricsReportingEvents();
@@ -780,8 +876,8 @@ var _MetricsReportingEvents2 = _interopRequireDefault(_MetricsReportingEvents);
 function MetricsCollectionController(config) {
 
     config = config || {};
+    var instance = undefined;
     var metricsControllers = {};
-
     var context = this.context;
     var eventBus = config.eventBus;
     var events = config.events;
@@ -834,20 +930,21 @@ function MetricsCollectionController(config) {
     }
 
     function setup() {
-        eventBus.on(events.MANIFEST_UPDATED, update);
-        eventBus.on(events.STREAM_TEARDOWN_COMPLETE, resetMetricsControllers);
+        eventBus.on(events.MANIFEST_UPDATED, update, instance);
+        eventBus.on(events.STREAM_TEARDOWN_COMPLETE, resetMetricsControllers, instance);
     }
 
     function reset() {
-        eventBus.off(events.MANIFEST_UPDATED, update);
-        eventBus.off(events.STREAM_TEARDOWN_COMPLETE, resetMetricsControllers);
+        eventBus.off(events.MANIFEST_UPDATED, update, instance);
+        eventBus.off(events.STREAM_TEARDOWN_COMPLETE, resetMetricsControllers, instance);
     }
 
-    setup();
-
-    return {
+    instance = {
         reset: reset
     };
+
+    setup();
+    return instance;
 }
 
 MetricsCollectionController.__dashjs_factory_name = 'MetricsCollectionController';
@@ -1362,7 +1459,7 @@ function MetricsHandlerFactory(config) {
 
     config = config || {};
     var instance = undefined;
-    var debug = config.debug;
+    var logger = config.debug ? config.debug.getLogger(instance) : {};
 
     // group 1: key, [group 3: n [, group 5: type]]
     var keyRegex = /([a-zA-Z]*)(\(([0-9]*)(\,\s*([a-zA-Z]*))?\))?/;
@@ -1394,7 +1491,7 @@ function MetricsHandlerFactory(config) {
             handler.initialize(matches[1], reportingController, matches[3], matches[5]);
         } catch (e) {
             handler = null;
-            debug.error('MetricsHandlerFactory: Could not create handler for type ' + matches[1] + ' with args ' + matches[3] + ', ' + matches[5] + ' (' + e.message + ')');
+            logger.error('MetricsHandlerFactory: Could not create handler for type ' + matches[1] + ' with args ' + matches[3] + ', ' + matches[5] + ' (' + e.message + ')');
         }
 
         return handler;
@@ -1894,10 +1991,9 @@ function ReportingFactory(config) {
     };
 
     var context = this.context;
-    var debug = config.debug;
-    var metricsConstants = config.metricsConstants;
-
     var instance = undefined;
+    var logger = config.debug ? config.debug.getLogger(instance) : {};
+    var metricsConstants = config.metricsConstants;
 
     function create(entry, rangeController) {
         var reporting = undefined;
@@ -1910,7 +2006,7 @@ function ReportingFactory(config) {
             reporting.initialize(entry, rangeController);
         } catch (e) {
             reporting = null;
-            debug.error('ReportingFactory: could not create Reporting with schemeIdUri ' + entry.schemeIdUri + ' (' + e.message + ')');
+            logger.error('ReportingFactory: could not create Reporting with schemeIdUri ' + entry.schemeIdUri + ' (' + e.message + ')');
         }
 
         return reporting;
@@ -2091,7 +2187,7 @@ function DVBReporting(config) {
 
         rangeController = rc;
 
-        reportingUrl = entry['dvb:reportingUrl'];
+        reportingUrl = entry.dvb_reportingUrl;
 
         // If a required attribute is missing, the Reporting descriptor may
         // be ignored by the Player
@@ -2103,11 +2199,10 @@ function DVBReporting(config) {
         // static for the duration of the MPD, regardless of MPD updates.
         // (i.e. only calling reset (or failure) changes this state)
         if (!reportingPlayerStatusDecided) {
-            // NOTE: DVB spec has a typo where it incorrectly references the
-            // priority attribute, which should be probability
-            probability = entry['dvb:probability'] || entry['dvb:priority'] || 0;
-            // If the @priority attribute is set to 1000, it shall be a reporting Player.
-            // If the @priority attribute is missing, the Player shall not be a reporting Player.
+            probability = entry.dvb_probability;
+            // TS 103 285 Clause 10.12.3.4
+            // If the @probability attribute is set to 1000, it shall be a reporting Player.
+            // If the @probability attribute is absent it will take the default value of 1000.
             // For any other value of the @probability attribute, it shall decide at random whether to be a
             // reporting Player, such that the probability of being one is @probability/1000.
             if (probability && (probability === 1000 || probability / 1000 >= randomNumberGenerator.random())) {
@@ -2445,7 +2540,6 @@ function ManifestParsing(config) {
     var constants = config.constants;
 
     function getMetricsRangeStartTime(manifest, dynamic, range) {
-        var mpd = adapter.getMpd(manifest);
         var voPeriods = undefined,
             reportingStartTime = undefined;
         var presentationStartTime = 0;
@@ -2455,12 +2549,12 @@ function ManifestParsing(config) {
             // indicated in wall clock time by adding the value of this
             // attribute to the value of the MPD@availabilityStartTime
             // attribute.
-            presentationStartTime = adapter.getAvailabilityStartTime(mpd) / 1000;
+            presentationStartTime = adapter.getAvailabilityStartTime(manifest) / 1000;
         } else {
             // For services with MPD@type='static', the start time is indicated
             // in Media Presentation time and is relative to the PeriodStart
             // time of the first Period in this MPD.
-            voPeriods = adapter.getRegularPeriods(mpd);
+            voPeriods = adapter.getRegularPeriods(manifest);
 
             if (voPeriods.length) {
                 presentationStartTime = voPeriods[0].start;
@@ -2524,10 +2618,16 @@ function ManifestParsing(config) {
                             return;
                         }
 
-                        for (var prop in reporting) {
-                            if (reporting.hasOwnProperty(prop)) {
-                                reportingEntry[prop] = reporting[prop];
-                            }
+                        if (reporting.hasOwnProperty('value')) {
+                            reportingEntry.value = reporting.value;
+                        }
+
+                        if (reporting.hasOwnProperty(constants.DVB_REPORTING_URL)) {
+                            reportingEntry.dvb_reportingUrl = reporting[constants.DVB_REPORTING_URL];
+                        }
+
+                        if (reporting.hasOwnProperty(constants.DVB_PROBABILITY)) {
+                            reportingEntry.dvb_probability = reporting[constants.DVB_PROBABILITY];
                         }
 
                         metricEntry.Reporting.push(reportingEntry);
@@ -3027,6 +3127,8 @@ module.exports = exports["default"];
  * @class
  * @ignore
  */
+
+// TS 103 285 Clause 10.12.3.3
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3035,12 +3137,17 @@ Object.defineProperty(exports, '__esModule', {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
+var DEFAULT_DVB_PROBABILITY = 1000;
+
 var Reporting = function Reporting() {
   _classCallCheck(this, Reporting);
 
-  // Reporting is a DescriptorType and doesn't have any additional fields
   this.schemeIdUri = '';
   this.value = '';
+
+  // DVB Extensions
+  this.dvb_reportingUrl = '';
+  this.dvb_probability = DEFAULT_DVB_PROBABILITY;
 };
 
 exports['default'] = Reporting;
