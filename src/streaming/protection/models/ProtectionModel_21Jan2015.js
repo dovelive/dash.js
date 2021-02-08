@@ -209,13 +209,15 @@ function ProtectionModel_21Jan2015(config) {
         session.generateRequest(dataType, initData).then(function () {
             logger.debug('DRM: Session created.  SessionID = ' + sessionToken.getSessionID());
             eventBus.trigger(events.KEY_SESSION_CREATED, { data: sessionToken });
-        }).catch(function (error) {
+        }).catch(function (/*error*/) {
             // TODO: Better error string
             removeSession(sessionToken);
-            eventBus.trigger(events.KEY_SESSION_CREATED, {
-                data: null,
-                error: new DashJSError(ProtectionErrors.KEY_SESSION_CREATED_ERROR_CODE, ProtectionErrors.KEY_SESSION_CREATED_ERROR_MESSAGE + 'Error generating key request -- ' + error.name)
-            });
+            // 20190511 disable event trigger when generationrequest failed.
+            // because on some case, even media file decryption success, total video decryption failed because of pssh data type error.
+            //eventBus.trigger(events.KEY_SESSION_CREATED, {
+            //    data: null,
+            //    error: new DashJSError(ProtectionErrors.KEY_SESSION_CREATED_ERROR_CODE, ProtectionErrors.KEY_SESSION_CREATED_ERROR_MESSAGE + 'Error generating key request -- ' + error.name)
+            //});
         });
     }
 
